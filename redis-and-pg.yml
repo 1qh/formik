@@ -1,0 +1,45 @@
+services:
+  redis:
+    container_name: morphik-redis
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - huy-network
+
+  postgres:
+    image: pgvector/pgvector:pg18-trixie
+    shm_size: 128mb
+    environment:
+      - POSTGRES_USER=huy
+      - POSTGRES_PASSWORD=huy
+      - POSTGRES_DB=huy
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U huy -d huy"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - huy-network
+
+networks:
+  huy-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
